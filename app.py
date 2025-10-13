@@ -4,51 +4,12 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# --- CORRECCIÓN EN EL DICCIONARIO DE TRABAJO ---
-# El valor 'Cuidar niños' tiene el código 4, igual que 'Nunca trabajó'.
-# Sin embargo, el código lo tiene como un string que se mapea a un int,
-# pero al usarse en el selectbox, podría causar problemas si el modelo espera
-# códigos diferentes. Asumo que el modelo solo tiene 4 categorías únicas
-# o que 'Cuidar niños' se considera igual a 'Nunca trabajó'.
-
-trabajo_dict = {
-    "Emprendedor": 1,
-    "Empresa privada": 2,
-    "En gobierno": 3,
-    "Nunca trabajó": 4,
-    "Cuidar niños": 5 # CAMBIADO a 5 para que sea una categoría diferente en el diccionario,
-                     # aunque podría ser el mismo código si así lo entrena el modelo.
-                     # Si el modelo espera 4, debes asegurarte que solo haya 4 categorías únicas en el diccionario:
-                     # "Cuidar niños" se mapea a 4 en el DataFrame (esto estaba correcto, pero el diccionario debe ser consistente)
-}
-# La corrección real se debe hacer en la lógica de creación del DataFrame de entrada:
-# trabajo_dict original:
-# trabajo_dict = {
-#     "Emprendedor": 1,
-#     "Empresa privada": 2,
-#     "En gobierno": 3,
-#     "Nunca trabajó": 4,
-#     "Cuidar niños": 4  # Esto hace que solo haya 4 claves/opciones pero el código será el mismo
-# }
-# Mantendré el diccionario original y corregiré la lógica de 'TipoTrabajo_Encoded' en el DataFrame para manejar la clave 'Cuidar niños' correctamente.
-
-# Diccionario original (sin cambios en la estructura)
-trabajo_dict = {
-    "Emprendedor": 1,
-    "Empresa privada": 2,
-    "En gobierno": 3,
-    "Nunca trabajó": 4,
-    "Cuidar niños": 4
-}
-
-
 # Configuración de la página
 st.set_page_config(page_title="🫀 Predicción de Infarto", layout="centered")
 st.title("🫀 Predicción de Riesgo de Infarto")
 st.markdown("Esta aplicación permite evaluar el riesgo de infarto a partir de variables clínicas codificadas. Ideal para actividades colaborativas y validación ética en el aula.")
 
 # Cargar modelo
-# NOTA: Asegúrate de que el archivo 'model4.pkl' esté en el mismo directorio.
 try:
     with open("model4.pkl", "rb") as file:
         model = pickle.load(file)
@@ -59,8 +20,7 @@ except Exception as e:
     st.error(f"Error al cargar el modelo: {e}")
     st.stop()
 
-
-# Diccionarios de codificación (se mantienen como en tu código original)
+# Diccionarios de codificación
 edad_dict = {
     "Primera Infancia": 1,
     "Infancia": 2,
@@ -87,8 +47,14 @@ estado_dict = {
     "Sí": 1,
     "No": 2
 }
-# trabajo_dict ya definido arriba
 
+trabajo_dict = {
+    "Emprendedor": 1,
+    "Empresa privada": 2,
+    "En gobierno": 3,
+    "Nunca trabajó": 4,
+    "Cuidar niños": 4
+}
 
 # Controles de entrada
 st.sidebar.header("📋 Ingrese los datos del paciente")
@@ -104,10 +70,6 @@ trabajo_cat = st.sidebar.selectbox("Tipo de trabajo", list(trabajo_dict.keys()))
 # Botón de predicción
 if st.button("🔍 Predecir riesgo"):
     # 1. Preparación de los datos de entrada
-    # El diccionario trabajo_dict tiene claves repetidas con el mismo valor (Nunca trabajó y Cuidar niños ambos son 4)
-    # y la clave 'Cuidar niños' tiene un valor asociado que es 4. La línea original estaba bien:
-    # 'TipoTrabajo_Encoded': [trabajo_dict[trabajo_cat]]
-
     input_data = pd.DataFrame({
         'Flag_hipertension': [1 if hipertension == "Sí" else 0],
         'Flag_problem_cardiaco': [1 if problema_cardiaco == "Sí" else 0],
@@ -116,13 +78,10 @@ if st.button("🔍 Predecir riesgo"):
         'IMC_Encoded': [imc_dict[imc_cat]],
         'Estado_Encoded': [estado_dict[estado_cat]],
         'TipoTrabajo_Encoded': [trabajo_dict[trabajo_cat]]
-        # CORRECCIÓN DE POSIBLE ERROR: Asegúrate de que la columna se llame 'Gluocosa_Encoded' o 'Glucosa_Encoded' en el modelo.
-        # Si el modelo se entrenó con 'Glucosa_Encoded', debes cambiarlo aquí. Asumo que 'Gluocosa_Encoded' es correcto.
     })
 
     # 2. Predicción
     try:
-        # Se asume que el modelo devuelve la probabilidad de la clase positiva (infarto = 1) en la posición [1]
         prediction_proba = model.predict_proba(input_data)[0]
         prediction = prediction_proba[1] 
     except Exception as e:
@@ -130,17 +89,9 @@ if st.button("🔍 Predecir riesgo"):
         st.stop()
 
 
-    # 3. Mostrar el resultado de la predicción
+    # 3. Cálculo de Nivel de Riesgo y colores
     risk_percentage = round(prediction * 100, 2)
-    st.success(f"🧠 Riesgo estimado de infarto: **{risk_percentage}%**")
-
-    # 4. Visualización simbólica mejorada (Barra de progreso más informativa)
-    # El barplot anterior era confuso porque todas las barras eran iguales.
-    # Una barra de progreso o un gauge es mejor para mostrar un porcentaje de riesgo.
     
-    st.markdown("### 📊 Nivel de Riesgo (Representación Visual)")
-    
-    # Usar un color que dependa del nivel de riesgo
     if risk_percentage < 30:
         risk_level = "Bajo"
         color = "green"
@@ -151,21 +102,27 @@ if st.button("🔍 Predecir riesgo"):
         risk_level = "Alto"
         color = "red"
         
+    # 4. Visualización de Resultados (¡ORDEN MODIFICADO!)
+    
+    # A. Nivel de Riesgo y barra de progreso
     st.markdown(
         f"""
-        <div style='background-color: {color}; color: white; padding: 10px; border-radius: 5px; text-align: center;'>
+        <div style='background-color: {color}; color: white; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 10px;'>
             **Nivel de Riesgo: {risk_level}**
         </div>
         """,
         unsafe_allow_html=True
     )
-
+    
+    # B. Riesgo estimado de infarto (st.success)
+    st.success(f"🧠 Riesgo estimado de infarto: **{risk_percentage}%**")
+    
+    # Barra de progreso
     st.progress(prediction)
+
+    # 5. Ficha de validación (Texto simplificado)
+    st.markdown("### 🧾 Ficha de validación")
     
-    # 5. Ficha simbólica (Se mantiene, es una buena práctica de validación ética)
-    st.markdown("### 🧾 Ficha de validación ética")
-    
-    # Se añade la visualización de las entradas en un DataFrame para una mejor tabla
     etiquetas = ['Hipertensión', 'Problema cardíaco', 'Edad', 'Glucosa', 'IMC', 'Estado civil', 'Tipo de trabajo']
     valores = [hipertension, problema_cardiaco, edad_cat, glucosa_cat, imc_cat, estado_cat, trabajo_cat]
     
@@ -178,6 +135,3 @@ if st.button("🔍 Predecir riesgo"):
     st.table(perfil_df.set_index('Variable'))
     
     st.markdown(f"**🧠 Riesgo estimado (final):** **{risk_percentage}%**")
-
-    # 6. (OPCIONAL) Visualización de las variables binarias y categóricas codificadas.
-    # Se elimina el barplot confuso de tu código original.
