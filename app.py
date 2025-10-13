@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -8,32 +7,33 @@ import seaborn as sns
 # Configuración de la página
 st.set_page_config(page_title="🫀 Predicción de Infarto", layout="centered")
 st.title("🫀 Predicción de Riesgo de Infarto")
-st.markdown("Esta aplicación permite evaluar el riesgo de infarto a partir de variables clínicas. Ideal para actividades colaborativas y validación ética en el aula.")
+st.markdown("Esta aplicación permite evaluar el riesgo de infarto a partir de variables codificadas. Ideal para actividades colaborativas y validación ética en el aula.")
 
 # Cargar modelo
 with open("model4.pkl", "rb") as file:
     model = pickle.load(file)
 
 # Controles de entrada
-st.sidebar.header("📋 Ingrese los datos del paciente")
-age = st.sidebar.slider("Edad", 18, 100, 50)
-cholesterol = st.sidebar.number_input("Colesterol (mg/dL)", min_value=100, max_value=400, value=200)
-blood_pressure = st.sidebar.number_input("Presión arterial (mmHg)", min_value=80, max_value=200, value=120)
-smoker = st.sidebar.selectbox("¿Fuma actualmente?", ["Sí", "No"])
-diabetic = st.sidebar.selectbox("¿Es diabético?", ["Sí", "No"])
+st.sidebar.header("📋 Ingrese los datos codificados del paciente")
 
-# Codificación simbólica
-smoker_bin = 1 if smoker == "Sí" else 0
-diabetic_bin = 1 if diabetic == "Sí" else 0
+flag_hipertension = st.sidebar.selectbox("¿Tiene hipertensión?", [0, 1])
+flag_problem_cardiaco = st.sidebar.selectbox("¿Tiene problemas cardíacos?", [0, 1])
+edad_encoded = st.sidebar.slider("Edad codificada", 0, 10, 4)
+gluocosa_encoded = st.sidebar.slider("Glucosa codificada", 0, 5, 2)
+imc_encoded = st.sidebar.slider("IMC codificado", 0, 5, 2)
+estado_encoded = st.sidebar.slider("Estado civil codificado", 0, 3, 1)
+tipo_trabajo_encoded = st.sidebar.slider("Tipo de trabajo codificado", 0, 5, 4)
 
 # Botón de predicción
 if st.button("🔍 Predecir riesgo"):
     input_data = pd.DataFrame({
-        "age": [age],
-        "cholesterol": [cholesterol],
-        "blood_pressure": [blood_pressure],
-        "smoker": [smoker_bin],
-        "diabetic": [diabetic_bin]
+        'Flag_hipertension': [flag_hipertension],
+        'Flag_problem_cardiaco': [flag_problem_cardiaco],
+        'Edad_Encoded': [edad_encoded],
+        'Gluocosa_Encoded': [gluocosa_encoded],
+        'IMC_Encoded': [imc_encoded],
+        'Estado_Encoded': [estado_encoded],
+        'TipoTrabajo_Encoded': [tipo_trabajo_encoded]
     })
 
     prediction = model.predict_proba(input_data)[0][1]
@@ -42,15 +42,12 @@ if st.button("🔍 Predecir riesgo"):
     # Visualización simbólica
     fig, ax = plt.subplots()
     sns.barplot(x=input_data.columns, y=input_data.values[0], palette="Reds")
-    ax.set_title("🔎 Perfil clínico del paciente")
+    ax.set_title("🔎 Perfil codificado del paciente")
     st.pyplot(fig)
 
     # Ficha simbólica
     st.markdown("### 🧾 Ficha de validación ética")
-    st.markdown(f"- Edad: {age} años")
-    st.markdown(f"- Colesterol: {cholesterol} mg/dL")
-    st.markdown(f"- Presión arterial: {blood_pressure} mmHg")
-    st.markdown(f"- Fuma: {smoker}")
-    st.markdown(f"- Diabético: {diabetic}")
+    for col in input_data.columns:
+        st.markdown(f"- {col}: {input_data[col].values[0]}")
     st.markdown(f"**Riesgo estimado:** {round(prediction * 100, 2)}%")
 
