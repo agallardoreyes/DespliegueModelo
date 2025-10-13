@@ -92,19 +92,26 @@ if st.button("🔍 Predecir riesgo"):
     # 3. Cálculo de Nivel de Riesgo y colores
     risk_percentage = round(prediction * 100, 2)
     
+    # Lógica de clasificación de riesgo
     if risk_percentage < 30:
         risk_level = "Bajo"
         color = "green"
+        admision_mensaje = "✅ El paciente es **APTO** para ser asegurado."
+        admision_tipo = "success"
     elif risk_percentage < 60:
         risk_level = "Moderado"
         color = "orange"
+        admision_mensaje = "⚠️ **RIESGO MODERADO.** Se requiere evaluación y condiciones especiales para asegurarlo."
+        admision_tipo = "warning"
     else:
         risk_level = "Alto"
         color = "red"
+        admision_mensaje = "🚫 **RIESGO ALTO.** No es apto para ser asegurado en las condiciones estándar."
+        admision_tipo = "error" # Usaremos st.error o st.warning para esta categoría
         
-    # 4. Visualización de Resultados (¡ORDEN MODIFICADO!)
+    # 4. Visualización de Resultados
     
-    # A. Nivel de Riesgo y barra de progreso
+    # A. Nivel de Riesgo
     st.markdown(
         f"""
         <div style='background-color: {color}; color: white; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 10px;'>
@@ -114,13 +121,22 @@ if st.button("🔍 Predecir riesgo"):
         unsafe_allow_html=True
     )
     
-    # B. Riesgo estimado de infarto (st.success)
+    # B. Riesgo estimado de infarto
     st.success(f"🧠 Riesgo estimado de infarto: **{risk_percentage}%**")
+    
+    # C. MENSAJE DE ADMISIÓN (NUEVO)
+    # Se utiliza st.info/warning/error según el tipo de riesgo
+    if admision_tipo == "success":
+        st.info(admision_mensaje)
+    elif admision_tipo == "warning":
+        st.warning(admision_mensaje)
+    elif admision_tipo == "error":
+        st.error(admision_mensaje)
     
     # Barra de progreso
     st.progress(prediction)
 
-    # 5. Ficha de validación (Texto simplificado)
+    # 5. Ficha de validación
     st.markdown("### 🧾 Ficha de validación")
     
     etiquetas = ['Hipertensión', 'Problema cardíaco', 'Edad', 'Glucosa', 'IMC', 'Estado civil', 'Tipo de trabajo']
