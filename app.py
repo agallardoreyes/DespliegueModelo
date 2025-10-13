@@ -7,7 +7,9 @@ import seaborn as sns
 # Configuración de la página
 st.set_page_config(page_title="🫀 Predicción de Infarto", layout="centered")
 st.title("🫀 Predicción de Riesgo de Infarto")
-st.markdown("Esta aplicación permite evaluar el riesgo de infarto a partir de variables clínicas codificadas. Ideal para actividades colaborativas y validación ética en el aula.")
+# --- LÍNEA MODIFICADA AQUÍ ---
+st.markdown("Esta aplicación evalúa el **riesgo de ataque cardíaco** de un paciente, ayudando a las aseguradoras a identificar candidatos con **baja probabilidad** de infarto para fines de asegurabilidad.")
+# -----------------------------
 
 # Cargar modelo
 try:
@@ -92,7 +94,7 @@ if st.button("🔍 Predecir riesgo"):
     # 3. Cálculo de Nivel de Riesgo y colores
     risk_percentage = round(prediction * 100, 2)
     
-    # Lógica de clasificación de riesgo
+    # Lógica de clasificación de riesgo y admisión
     if risk_percentage < 30:
         risk_level = "Bajo"
         color = "green"
@@ -124,8 +126,7 @@ if st.button("🔍 Predecir riesgo"):
     # B. Riesgo estimado de infarto
     st.success(f"🧠 Riesgo estimado de infarto: **{risk_percentage}%**")
     
-    # C. MENSAJE DE ADMISIÓN (NUEVO)
-    # Se utiliza st.info/warning/error según el tipo de riesgo
+    # C. MENSAJE DE ADMISIÓN
     if admision_tipo == "success":
         st.info(admision_mensaje)
     elif admision_tipo == "warning":
