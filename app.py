@@ -13,27 +13,63 @@ st.markdown("Esta aplicación permite evaluar el riesgo de infarto a partir de v
 with open("model4.pkl", "rb") as file:
     model = pickle.load(file)
 
+# Diccionarios de codificación
+edad_dict = {
+    "Primera Infancia": 1,
+    "Infancia": 2,
+    "Adolescencia temprana": 3,
+    "Juventud": 4,
+    "Adultez": 5,
+    "Vejez": 6
+}
+
+glucosa_dict = {
+    "Normal": 1,
+    "Prediabetes": 2,
+    "Diabetes": 3
+}
+
+imc_dict = {
+    "Bajo Peso": 1,
+    "Peso Saludable": 2,
+    "Sobrepeso": 3,
+    "Obesidad": 4
+}
+
+estado_dict = {
+    "Sí": 1,
+    "No": 2
+}
+
+trabajo_dict = {
+    "Emprendedor": 1,
+    "Empresa privada": 2,
+    "En gobierno": 3,
+    "Nunca trabajó": 4,
+    "Cuidar niños": 4
+}
+
 # Controles de entrada
 st.sidebar.header("📋 Ingrese los datos del paciente")
 
-hipertension = st.sidebar.selectbox("¿Tiene hipertensión?", [0, 1])
-problema_cardiaco = st.sidebar.selectbox("¿Tiene problemas cardíacos?", [0, 1])
-edad = st.sidebar.slider("Edad", 0, 10, 4)
-glucosa = st.sidebar.slider("Glucosa", 0, 5, 2)
-imc = st.sidebar.slider("IMC", 0, 5, 2)
-estado = st.sidebar.slider("Estado civil", 0, 3, 1)
-tipo_trabajo = st.sidebar.slider("Tipo de trabajo", 0, 5, 4)
+hipertension = st.sidebar.selectbox("¿Tiene hipertensión?", ["No", "Sí"])
+problema_cardiaco = st.sidebar.selectbox("¿Tiene problemas cardíacos?", ["No", "Sí"])
+edad_cat = st.sidebar.selectbox("Edad", list(edad_dict.keys()))
+glucosa_cat = st.sidebar.selectbox("Glucosa", list(glucosa_dict.keys()))
+imc_cat = st.sidebar.selectbox("IMC", list(imc_dict.keys()))
+estado_cat = st.sidebar.selectbox("Estado civil", list(estado_dict.keys()))
+trabajo_cat = st.sidebar.selectbox("Tipo de trabajo", list(trabajo_dict.keys()))
 
 # Botón de predicción
 if st.button("🔍 Predecir riesgo"):
     input_data = pd.DataFrame({
-        'Flag_hipertension': [hipertension],
-        'Flag_problem_cardiaco': [problema_cardiaco],
-        'Edad_Encoded': [edad],
-        'Gluocosa_Encoded': [glucosa],
-        'IMC_Encoded': [imc],
-        'Estado_Encoded': [estado],
-        'TipoTrabajo_Encoded': [tipo_trabajo]
+        'Flag_hipertension': [1 if hipertension == "Sí" else 0],
+        'Flag_problem_cardiaco': [1 if problema_cardiaco == "Sí" else 0],
+        'Edad_Encoded': [edad_dict[edad_cat]],
+        'Gluocosa_Encoded': [glucosa_dict[glucosa_cat]],
+        'IMC_Encoded': [imc_dict[imc_cat]],
+        'Estado_Encoded': [estado_dict[estado_cat]],
+        'TipoTrabajo_Encoded': [trabajo_dict[trabajo_cat]]
     })
 
     prediction = model.predict_proba(input_data)[0][1]
@@ -54,6 +90,8 @@ if st.button("🔍 Predecir riesgo"):
     # Ficha simbólica
     st.markdown("### 🧾 Ficha de validación ética")
     etiquetas = ['Hipertensión', 'Problema cardíaco', 'Edad', 'Glucosa', 'IMC', 'Estado civil', 'Tipo de trabajo']
-    for i, col in enumerate(input_data.columns):
-        st.markdown(f"- **{etiquetas[i]}**: {input_data[col].values[0]}")
+    valores = [hipertension, problema_cardiaco, edad_cat, glucosa_cat, imc_cat, estado_cat, trabajo_cat]
+    for etiqueta, valor in zip(etiquetas, valores):
+        st.markdown(f"- **{etiqueta}**: {valor}")
     st.markdown(f"**🧠 Riesgo estimado:** {round(prediction * 100, 2)}%")
+
