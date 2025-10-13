@@ -39,15 +39,17 @@ if st.button("🔍 Predecir riesgo"):
     prediction = model.predict_proba(input_data)[0][1]
     st.success(f"🧠 Riesgo estimado de infarto: {round(prediction * 100, 2)}%")
 
-    # Visualización simbólica
-    fig, ax = plt.subplots()
-    sns.barplot(x=input_data.columns, y=input_data.values[0], palette="Reds")
+    # Visualización simbólica mejorada
+    fig, ax = plt.subplots(figsize=(8, 4))
+    sns.barplot(x=input_data.columns, y=input_data.values[0], palette="Reds", ax=ax)
     ax.set_title("🔎 Perfil codificado del paciente")
+    ax.set_ylabel("Valor codificado")
+    ax.set_xlabel("Variable")
+    ax.tick_params(axis='x', rotation=30)
     st.pyplot(fig)
 
     # Ficha simbólica
     st.markdown("### 🧾 Ficha de validación ética")
     for col in input_data.columns:
-        st.markdown(f"- {col}: {input_data[col].values[0]}")
-    st.markdown(f"**Riesgo estimado:** {round(prediction * 100, 2)}%")
-
+        st.markdown(f"- **{col}**: {input_data[col].values[0]}")
+    st.markdown(f"**🧠 Riesgo estimado:** {round(prediction * 100, 2)}%")
