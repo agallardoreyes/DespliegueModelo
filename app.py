@@ -75,16 +75,29 @@ if st.button("🔍 Predecir riesgo"):
     prediction = model.predict_proba(input_data)[0][1]
     st.success(f"🧠 Riesgo estimado de infarto: {round(prediction * 100, 2)}%")
 
-    # Visualización simbólica mejorada
+    # Visualización simbólica mejorada con etiquetas
     fig, ax = plt.subplots(figsize=(8, 4))
-    sns.barplot(x=input_data.columns, y=input_data.values[0], palette="Reds", ax=ax)
-    ax.set_title("🔎 Perfil clínico del paciente")
-    ax.set_ylabel("Valor codificado")
-    ax.set_xlabel("Variable")
-    ax.set_xticklabels(
-        ['Hipertensión', 'Problema cardíaco', 'Edad', 'Glucosa', 'IMC', 'Estado civil', 'Tipo de trabajo'],
-        rotation=90
+    etiquetas_descriptivas = [
+        f"Hipertensión: {hipertension}",
+        f"Problema cardíaco: {problema_cardiaco}",
+        f"Edad: {edad_cat}",
+        f"Glucosa: {glucosa_cat}",
+        f"IMC: {imc_cat}",
+        f"Estado civil: {estado_cat}",
+        f"Tipo de trabajo: {trabajo_cat}"
+    ]
+
+    sns.barplot(
+        x=[1]*len(etiquetas_descriptivas),
+        y=etiquetas_descriptivas,
+        palette="Reds",
+        ax=ax
     )
+
+    ax.set_title("🔎 Perfil clínico del paciente")
+    ax.set_xlabel("Presencia / Categoría")
+    ax.set_ylabel("Variable")
+    ax.set_xticks([])
     st.pyplot(fig)
 
     # Ficha simbólica
@@ -94,4 +107,3 @@ if st.button("🔍 Predecir riesgo"):
     for etiqueta, valor in zip(etiquetas, valores):
         st.markdown(f"- **{etiqueta}**: {valor}")
     st.markdown(f"**🧠 Riesgo estimado:** {round(prediction * 100, 2)}%")
-
